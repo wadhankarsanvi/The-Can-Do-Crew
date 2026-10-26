@@ -1,12 +1,21 @@
-﻿import argparse
+import argparse
 import hashlib
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
 import requests
-import yaml
+import json
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
-from sim._sim_base import _make_event
+# Import _make_event handling both package and script execution
+if __package__:
+    from ._sim_base import _make_event
+else:
+    # Running as a script, use direct import
+    from _sim_base import _make_event
 
 
 def _parse_offset(offset: str) -> int:
@@ -34,8 +43,11 @@ def _parse_offset(offset: str) -> int:
 
 
 def _load_yaml(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as file:
-        data = yaml.safe_load(file)
+    with open(path, "r", encoding="utf-8-sig") as file:
+        if yaml:
+            data = yaml.safe_load(file)
+        else:
+            data = json.load(file)
 
     if not isinstance(data, dict):
         raise ValueError("Scenario YAML must contain a mapping.")
